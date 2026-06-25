@@ -1,0 +1,730 @@
+// OttPanal - Schema de Base de Datos
+// Red social para Ott Educación Superior
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          Role      @default(STUDENT)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       Profile?
+  posts         Post[]
+  likes         Like[]
+  comments      Comment[]
+  shares        Share[]
+  connectionsAsRequester Connection[] @relation("RequesterConnections")
+  connectionsAsReceiver  Connection[] @relation("ReceiverConnections")
+  conversationParticipants ConversationParticipant[]
+  messages      Message[]
+  notifications Notification[]
+  jobApplications JobApplication[]
+  savedJobs     SavedJob[]
+  eventAttendees EventAttendee[]
+  groupMembers  GroupMember[]
+  groupPosts    GroupPost[]
+  forumThreads  ForumThread[]
+  forumReplies  ForumReply[]
+  company       Company?
+
+  @@map("users")
+}
+
+enum Role {
+  STUDENT
+  ALUMNI
+  COMPANY
+  ADMIN
+}
+
+// ============================================
+// PERFILES
+// ============================================
+
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  firstName       String
+  lastName        String
+  avatarUrl       String?
+  bannerUrl       String?
+  headline        String?
+  summary         String?
+  location        String?
+  careerId        String?
+  graduationYear  Int?
+  currentCompany  String?
+  website         String?
+  linkedinUrl     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  career          Career?  @relation(fields: [careerId], references: [id])
+  experiences     Experience[]
+  educations      Education[]
+  certifications  Certification[]
+  skills          UserSkill[]
+  languages       Language[]
+  projects        Project[]
+  awards          Award[]
+  courses         Course[]
+  volunteer       Volunteer[]
+
+  @@map("profiles")
+}
+
+// ============================================
+// EXPERIENCIA LABORAL
+// ============================================
+
+model Experience {
+  id          String   @id @default(cuid())
+  profileId   String
+  company     String
+  position    String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean  @default(false)
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}
+
+// ============================================
+// EDUCACIÓN
+// ============================================
+
+model Education {
+  id          String   @id @default(cuid())
+  profileId   String
+  institution String
+  degree      String
+  field       String?
+  startDate   DateTime
+  endDate     DateTime?
+  grade       String?
+  activities  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+// ============================================
+// CERTIFICACIONES
+// ============================================
+
+model Certification {
+  id              String   @id @default(cuid())
+  profileId       String
+  name            String
+  issuer          String
+  issueDate       DateTime
+  expirationDate  DateTime?
+  credentialId    String?
+  credentialUrl   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("certifications")
+}
+
+// ============================================
+// HABILIDADES
+// ============================================
+
+model Skill {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  users     UserSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id        String   @id @default(cuid())
+  profileId String
+  skillId   String
+  level     Int      @default(3) // 1-5
+  createdAt DateTime @default(now())
+
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, skillId])
+  @@map("user_skills")
+}
+
+// ============================================
+// IDIOMAS
+// ============================================
+
+model Language {
+  id          String   @id @default(cuid())
+  profileId   String
+  language    String
+  proficiency String   // Básico, Intermedio, Avanzado, Nativo
+  createdAt   DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("languages")
+}
+
+// ============================================
+// PROYECTOS
+// ============================================
+
+model Project {
+  id          String   @id @default(cuid())
+  profileId   String
+  title       String
+  description String?
+  url         String?
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("projects")
+}
+
+// ============================================
+// PREMIOS
+// ============================================
+
+model Award {
+  id          String   @id @default(cuid())
+  profileId   String
+  title       String
+  issuer      String
+  date        DateTime
+  description String?
+  createdAt   DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("awards")
+}
+
+// ============================================
+// CURSOS
+// ============================================
+
+model Course {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String
+  number    String?
+  url       String?
+  createdAt DateTime @default(now())
+
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("courses")
+}
+
+// ============================================
+// VOLUNTARIADO
+// ============================================
+
+model Volunteer {
+  id          String   @id @default(cuid())
+  profileId   String
+  organization String
+  role        String
+  cause       String?
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("volunteer")
+}
+
+// ============================================
+// CARRERAS Y FACULTADES
+// ============================================
+
+model Faculty {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  careers Career[]
+
+  @@map("faculties")
+}
+
+model Career {
+  id        String   @id @default(cuid())
+  name      String
+  facultyId String
+  profiles  Profile[]
+  forumCategories ForumCategory[]
+  groups    Group[]
+
+  faculty   Faculty  @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@map("careers")
+}
+
+// ============================================
+// PUBLICACIONES (FEED)
+// ============================================
+
+model Post {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  imageUrl  String?
+  postType  PostType @default(TEXT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes     Like[]
+  comments  Comment[]
+  shares    Share[]
+
+  @@map("posts")
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  ARTICLE
+  JOB
+  EVENT
+}
+
+// ============================================
+// LIKES
+// ============================================
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+// ============================================
+// COMENTARIOS
+// ============================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+// ============================================
+// COMPARTIR (POLINIZAR)
+// ============================================
+
+model Share {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String?
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("shares")
+}
+
+// ============================================
+// CONEXIONES
+// ============================================
+
+model Connection {
+  id          String       @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  requester   User         @relation("RequesterConnections", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver    User         @relation("ReceiverConnections", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, receiverId])
+  @@map("connections")
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// ============================================
+// MENSAJERÍA
+// ============================================
+
+model Conversation {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// ============================================
+// NOTIFICACIONES
+// ============================================
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        NotificationType
+  referenceId String?
+  actorId     String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  SHARE
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  MESSAGE
+  JOB_APPLICATION
+  MENTION
+}
+
+// ============================================
+// FOROS
+// ============================================
+
+model ForumCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  careerId    String?
+  createdAt   DateTime @default(now())
+
+  career      Career?  @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  threads     ForumThread[]
+
+  @@map("forum_categories")
+}
+
+model ForumThread {
+  id          String   @id @default(cuid())
+  categoryId  String
+  userId      String
+  title       String
+  content     String
+  pinned      Boolean  @default(false)
+  locked      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies     ForumReply[]
+
+  @@map("forum_threads")
+}
+
+model ForumReply {
+  id        String   @id @default(cuid())
+  threadId  String
+  userId    String
+  content   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    ForumReply? @relation("ReplyReplies", fields: [parentId], references: [id])
+  replies   ForumReply[] @relation("ReplyReplies")
+
+  @@map("forum_replies")
+}
+
+// ============================================
+// BOLSA DE TRABAJO
+// ============================================
+
+model Company {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  name        String
+  industry    String?
+  size        String?
+  description String?
+  logoUrl     String?
+  website     String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobPostings JobPosting[]
+
+  @@map("companies")
+}
+
+model JobPosting {
+  id          String   @id @default(cuid())
+  companyId   String
+  title       String
+  description String
+  requirements String?
+  type        JobType  @default(FULL_TIME)
+  location    String?
+  salaryMin   Int?
+  salaryMax   Int?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expiresAt   DateTime?
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+  savedJobs   SavedJob[]
+
+  @@map("job_postings")
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  REMOTE
+}
+
+model JobApplication {
+  id          String   @id @default(cuid())
+  jobId       String
+  userId      String
+  coverLetter String?
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  job         JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+  @@map("job_applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  jobId     String
+  userId    String
+  createdAt DateTime @default(now())
+
+  job       JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+  @@map("saved_jobs")
+}
+
+// ============================================
+// EVENTOS
+// ============================================
+
+model Event {
+  id          String   @id @default(cuid())
+  creatorId   String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  imageUrl    String?
+  type        EventType @default(PRESENTIAL)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendees   EventAttendee[]
+
+  @@map("events")
+}
+
+enum EventType {
+  PRESENTIAL
+  VIRTUAL
+  HYBRID
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    AttendeeStatus @default(GOING)
+  createdAt DateTime @default(now())
+
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_attendees")
+}
+
+enum AttendeeStatus {
+  GOING
+  MAYBE
+  NOT_GOING
+}
+
+// ============================================
+// GRUPOS
+// ============================================
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  careerId    String?
+  imageUrl    String?
+  privacy     GroupPrivacy @default(PUBLIC)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  career      Career?  @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  posts       GroupPost[]
+
+  @@map("groups")
+}
+
+enum GroupPrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+enum GroupRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+model GroupPost {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("group_posts")
+}
