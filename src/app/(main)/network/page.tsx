@@ -41,12 +41,20 @@ export default async function NetworkPage() {
     include: {
       requester: {
         include: {
-          profile: true,
+          profile: {
+            include: {
+              career: true,
+            },
+          },
         },
       },
       receiver: {
         include: {
-          profile: true,
+          profile: {
+            include: {
+              career: true,
+            },
+          },
         },
       },
     },
@@ -59,7 +67,11 @@ export default async function NetworkPage() {
   const userWithProfile = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      profile: true,
+      profile: {
+        include: {
+          career: true,
+        },
+      },
     },
   })
 
@@ -77,7 +89,11 @@ export default async function NetworkPage() {
         ],
       },
       include: {
-        profile: true,
+        profile: {
+          include: {
+            career: true,
+          },
+        },
       },
       take: 10,
     })

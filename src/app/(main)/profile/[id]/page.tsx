@@ -7,14 +7,14 @@ import { SkillsSection } from '@/components/profile/SkillsSection'
 import { notFound } from 'next/navigation'
 
 interface ProfilePageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const session = await auth()
-  const userId = params.id
+  const { id: userId } = await params
 
   // Get user profile
   const user = await prisma.user.findUnique({

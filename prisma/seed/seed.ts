@@ -80,6 +80,7 @@ async function main() {
         },
       },
     },
+    include: { profile: true },
   })
 
   const student2 = await prisma.user.create({
@@ -99,6 +100,7 @@ async function main() {
         },
       },
     },
+    include: { profile: true },
   })
 
   const alumni1 = await prisma.user.create({
@@ -119,6 +121,7 @@ async function main() {
         },
       },
     },
+    include: { profile: true },
   })
 
   const company1 = await prisma.user.create({
@@ -137,6 +140,7 @@ async function main() {
         },
       },
     },
+    include: { company: true },
   })
 
   // Create skills

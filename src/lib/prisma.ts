@@ -1,6 +1,5 @@
 import { PrismaClient } from '../generated/prisma/client'
-import { PrismaLibSQL } from '@prisma/adapter-libsql'
-import { createClient } from '@libsql/client'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 import path from 'path'
 
 const globalForPrisma = globalThis as unknown as {
@@ -12,17 +11,17 @@ function createPrismaClient() {
   const authToken = process.env.TURSO_AUTH_TOKEN
   
   if (url && authToken) {
-    const libsql = createClient({ 
+    const adapter = new PrismaLibSql({
       url,
-      authToken 
+      authToken
     })
-    const adapter = new PrismaLibSQL(libsql)
     return new PrismaClient({ adapter })
   }
   
   const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
-  const libsql = createClient({ url: `file:${dbPath}` })
-  const adapter = new PrismaLibSQL(libsql)
+  const adapter = new PrismaLibSql({
+    url: `file:${dbPath}`
+  })
   return new PrismaClient({ adapter })
 }
 
